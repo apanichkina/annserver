@@ -8,14 +8,13 @@ import errno
 import argparse
 
 DEF_HOST = '127.0.0.1'
-DEF_PORT = 8081
+DEF_PORT = 80
 DEF_WORKERS_COUNT = 8
-DEF_NCPU = 2
+DEF_NCPU = 1
 DEF_ROOT_DIR = os.path.dirname(__file__) + '/document_root'
 
 
 def main():
-    print 'ok'
     parser = argparse.ArgumentParser()
     parser.add_argument('-host', type=str, help="Host")
     parser.add_argument('-p', type=int, help="Port")
@@ -38,7 +37,7 @@ def main():
         pid = os.fork()
         forks.append(pid)
         if pid == 0:
-            print 'Running worker with PID:', os.getpid()
+            print 'Child PID:', os.getpid()
             while True:
                 try:
                     client_connection, client_address = sock.accept()
