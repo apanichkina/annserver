@@ -70,7 +70,6 @@ class HttpConnection:
         self.method, self.url, self.protocol = start_string.split(' ', 2)
         #Игнорировать параметры или отдавать 405?
         path = self.url.split('?')[0]
-        print self.path
         self.path = urllib.unquote(path).decode('utf8')
         for i, line in enumerate(data[1:], 1):
             if line.strip():
