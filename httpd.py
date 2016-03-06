@@ -11,7 +11,7 @@ DEF_HOST = '127.0.0.1'
 DEF_PORT = 8081
 DEF_WORKERS_COUNT = 8
 DEF_NCPU = 2
-DEF_ROOT_DIR = os.path.dirname(__file__) + 'document_root'
+DEF_ROOT_DIR = os.path.dirname(__file__) + '/document_root'
 
 
 def main():
