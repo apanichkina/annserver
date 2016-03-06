@@ -29,14 +29,15 @@ STATUS_REASON_PHRASE = {
 }
 SERVER_NAME = 'Annginx'
 SEPARATOR = '\r\n'
-DOCUMENT_ROOT = '/Users/anna/Desktop/annserver/document_root'
 INDEX = 'index.html'
 SUPPORT_METHODS = ['GET', 'HEAD']
+PORTION_TO_SEND = 4096
 
 
 class HttpConnection:
-    def __init__(self, connection):
+    def __init__(self, connection, root_dir):
         self.connection = connection
+        self.document_root = root_dir
         self.method = ''
         self.url = ''
         self.path = ''
@@ -49,12 +50,27 @@ class HttpConnection:
         self.content_type = 'txt'
         self.body = None
 
+    def do_response(self):
+        client_body = self.parser()
+        headers, body = self.create_answer()
+        self.connection.send(headers)
+
+        if body is not None:
+            body.seek(0)
+            block = body.read(PORTION_TO_SEND)
+            while (block):
+                self.connection.send(block)
+                block = body.read(PORTION_TO_SEND)
+            body.close()
+
     def parser(self):
         client_query = self.connection.recv(1024)
         data = client_query.split('\r\n')
         start_string = data[0]
         self.method, self.url, self.protocol = start_string.split(' ', 2)
+        #Игнорировать параметры или отдавать 405?
         path = self.url.split('?')[0]
+        print self.path
         self.path = urllib.unquote(path).decode('utf8')
         for i, line in enumerate(data[1:], 1):
             if line.strip():
@@ -66,26 +82,27 @@ class HttpConnection:
         return body
 
     def find_content(self):
-        content = ''
-        self.full_path = DOCUMENT_ROOT + self.path
-        if os.path.isfile(self.full_path):
-            content = self.path.split('/')[-1]
-            filename, self.content_type = content.split('.')
-            self.file_size = os.stat(self.full_path).st_size
-            ##body
+        if '..' in self.path:
+            self.status = 400
+            return
         else:
-            # print self.path.split('.')[-1]
-            # if self.path.split('.')[-1]:
-            if '.' in self.path:
-                self.status = 404
-            else:#путь заканчивается не файлом
-                self.full_path = DOCUMENT_ROOT + self.path + INDEX
-                if os.path.isfile(self.full_path):
-                    filename, self.content_type = INDEX.split('.')
-                    self.file_size = os.stat(self.full_path).st_size
-                    ##body
-                else:#в директории нет index файла
-                    self.status = 403
+            self.full_path = self.document_root + self.path
+            if os.path.isfile(self.full_path):
+                content = self.path.split('/')[-1]
+                self.content_type = content.split('.')[-1]
+                self.file_size = os.stat(self.full_path).st_size
+                ##body
+            else:
+                if '.' in self.path:
+                    self.status = 404
+                else:#путь заканчивается не файлом
+                    self.full_path = self.document_root + self.path + INDEX
+                    if os.path.isfile(self.full_path):
+                        self.content_type = INDEX.split('.')[-1]
+                        self.file_size = os.stat(self.full_path).st_size
+                        ##body
+                    else:#в директории нет index файла
+                        self.status = 403
 
     def create_answer(self):
         if self.method in SUPPORT_METHODS:
@@ -101,7 +118,8 @@ class HttpConnection:
         if self.status == 200:
             response += 'Content-Length: {length}'.format(length=self.file_size) + SEPARATOR
             response += 'Content-Type: {content_type}'.format(content_type=CONTENT_TYPE.setdefault(self.content_type, DEFAULT_CONTENT_TYPE)) + SEPARATOR
+            response += SEPARATOR
             if self.method == 'GET':
-                response += SEPARATOR
                 self.body = open(self.full_path, 'rb')
         return response, self.body
+
