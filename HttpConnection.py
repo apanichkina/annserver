@@ -67,7 +67,12 @@ class HttpConnection:
         client_query = self.connection.recv(1024)
         data = client_query.split('\r\n')
         start_string = data[0]
-        self.method, self.url, self.protocol = start_string.split(' ', 2)
+        try:
+            self.method, self.url, self.protocol = start_string.split(' ', 2)
+        except:
+            print "Bad query!"
+            return
+        # self.method, self.url, self.protocol = start_string.split(' ', 2)
         #Игнорировать параметры или отдавать 405?
         path = self.url.split('?')[0]
         self.path = urllib.unquote(path).decode('utf8')

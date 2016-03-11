@@ -8,9 +8,9 @@ import errno
 import argparse
 
 DEF_HOST = '127.0.0.1'
-DEF_PORT = 80
-DEF_WORKERS_COUNT = 8
-DEF_NCPU = 1
+DEF_PORT = 9000
+DEF_WORKERS_COUNT = 2
+DEF_NCPU = 2
 DEF_ROOT_DIR = os.path.dirname(__file__) + '/document_root'
 
 
